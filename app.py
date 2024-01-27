@@ -6,10 +6,11 @@ app = Flask(__name__)
 
 # Connect to MySQL
 connection = pymysql.connect(
-    host='127.0.0.1', 
-    user="root", 
-    password="master#123", 
-    database="form"
+    host='mysqldb.cd2pfftf5k62.us-east-2.rds.amazonaws.com', 
+    port=3306,
+    user="admin", 
+    password="adminadmin", 
+    database="mysqldb"
     )
 cursor = connection.cursor()
 
