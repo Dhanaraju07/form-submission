@@ -1,35 +1,47 @@
-from flask import Flask, render_template, request
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, redirect
+import pymysql
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = 'mysql://root:master#123@localhost/form'
-db = SQLAlchemy(app)
 
-class FormData(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), nullable=False)
-    username = db.Column(db.String(80), nullable=False)
-    fullname = db.Column(db.String(120), nullable=False)
+# Connect to MySQL
+connection = pymysql.connect(
+    host='127.0.0.1', 
+    user="root", 
+    password="master#123", 
+    database="form"
+    )
+cursor = connection.cursor()
+
+# Create a table if not exists
+create_table_query = '''
+CREATE TABLE IF NOT EXISTS form_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255),
+    username VARCHAR(255),
+    fullname VARCHAR(255)
+)
+'''
+cursor.execute(create_table_query)
+connection.commit()
 
 @app.route('/')
-def home():
+def index():
     return render_template('index.html')
 
-@app.route('/submit', methods=["POST"])
-def submit_form():
-    email = request.form.get('email')
-    username = request.form.get('username')
-    fullname = request.form.get('fullname')
+@app.route('/submit', methods=['POST'])
+def submit():
+    if request.method == 'POST':
+        email = request.form['email']
+        username = request.form['username']
+        fullname = request.form['fullname']
 
-    new_data = FormData(email=email, username=username, fullname=fullname)
+        # Insert data into the database
+        insert_query = 'INSERT INTO form_data (email, username, fullname) VALUES (%s, %s, %s)'
+        cursor.execute(insert_query, (email, username, fullname))
+        connection.commit()
 
-    db.session.add(new_data)
-    db.session.commit()
+        return redirect('/')
 
-    return "Form submitted successfully"
-
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
+if __name__ == '__main__':
     app.run(debug=True)
